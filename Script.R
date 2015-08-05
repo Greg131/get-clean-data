@@ -65,3 +65,12 @@ cameraDataSubset <- read.xlsx("./data/Baltimore_Fixed_Speed_Cameras.xls",sheetIn
 # ----------------------------------------------------------
 
 
+# ----------------------------------------------------------
+#       Reading XML
+# ----------------------------------------------------------
+
+#       Extensible markup language
+#       Frequently used for wed scrapping
+#       Markup / content
+
+
