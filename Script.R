@@ -124,5 +124,79 @@ FoLbullenoli <- xpathSApply(doc,"//li[@class='FoLbullenoli']",xmlValue)
 FoLbullenoli
 #     il faut <li class="xxxx"
 
+# ----------------------------------------------------------
+#       Reading JSON (Javascript Object Notation)
+#       Common format for Appli Prog Interf (ex for twitter facebook...)
+#       Data stored as 
+#       Numbers, 
+#       String, 
+#       Boolean, 
+#       Array, 
+#       Object
+# ----------------------------------------------------------
+
+#   Un document JSON ne comprend que deux types d'??l??ments structurels :
+#   des ensembles de paires nom / valeur ;
+#   des listes ordonn??es de valeurs.
+#   Ces m??mes ??l??ments repr??sentent trois types de donn??es :
+#     des objets ;
+#     des tableaux ;
+#     des valeurs g??n??riques de type tableau, objet, bool??en, nombre, cha??ne ou null.
+
+library(jsonlite)
+
+fileUrl <- "https://api.github.com/users/Greg131/repos"
+jsonData <- fromJSON(fileUrl)
+names(jsonData)
+jsonData
+class(jsonData)
+
+names(jsonData$owner)
+jsonData$owner$login
 
 
+myjson <- toJSON(iris, pretty=TRUE)
+class(myjson)
+cat(myjson)
+
+iris2 <- fromJSON(myjson)
+head(iris2)
+
+# ----------------------------------------------------------
+#       Using data.table (faster & more memory efficient than data frame)
+# ----------------------------------------------------------
+
+library(data.table)
+
+DF = data.frame(x=rnorm(9), y=rep(c("a","b","c"), each=3), z=rnorm(9))
+head(DF,3)
+DF
+
+DT = data.table(x=rnorm(9), y=rep(c("a","b","c"), each=3), z=rnorm(9))
+head(DT,3)
+DT
+class(DT)
+
+#     See all the data tables in memory
+tables()
+
+#     Subsetting rows
+
+DT[2,]
+DT[DT$y=="a",]
+
+DT[c(2,3)]  # un peu diff de DF... deux lignes (au lieu de col)
+DF[c(2,3)]  # 
+
+DT[,c(2,3)]
+# diverge vs DF : the argument you pass is an "expression"
+# ie collection of statement enclosed in curly bracket
+{
+  x=1
+  y=2
+}
+k = {print(10); 5}
+print(k)
+
+DT[,list(mean(x),sum(z))]
+DT[,table(y)]
