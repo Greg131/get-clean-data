@@ -16,7 +16,8 @@ if (!file.exists("data"))       {
 
 #       Ex Baltimore fixed camera data
 fileUrl <- "https://data.baltimorecity.gov/api/views/dz54-2aru/rows.csv?accessType=DOWNLOAD"
-
+download.file(fileUrl, destfile = "./data/cameras.csv", method = "curl")
+list.files("./data")
 
 #       If the url starts with http ... ok, 
 #                       https -> need to set method="curl" with MAC
@@ -52,7 +53,7 @@ cameraData <- read.xlsx("./data/cameras.xlsx",sheetIndex=1,header=TRUE)
 colIndex <- 2:3
 rowIndex <- 1:4
 cameraDataSubset <- read.xlsx("./data/cameras.xlsx",sheetIndex=1,header=TRUE, colIndex=colIndex, rowIndex=rowIndex)
-cameraData <- read.xlsx("./data/Baltimore_Fixed_Speed_Cameras.xls",sheetIndex=1,header=TRUE)
+#cameraData <- read.xlsx("./data/cameras.xlsx",sheetIndex=1,header=TRUE)
 #colIndex <- 2:3
 #rowIndex <- 1:4
 #cameraDataSubset <- read.xlsx("./data/Baltimore_Fixed_Speed_Cameras.xls",sheetIndex=1,header=TRUE, colIndex=colIndex, rowIndex=rowIndex)
@@ -163,7 +164,9 @@ iris2 <- fromJSON(myjson)
 head(iris2)
 
 # ----------------------------------------------------------
-#       Using data.table (faster & more memory efficient than data frame)
+#       Using data.table 
+#       faster & more memory efficient than data frame
+#       Much faster at subsetting, group, and updating
 # ----------------------------------------------------------
 
 library(data.table)
@@ -174,22 +177,27 @@ DF
 
 DT = data.table(x=rnorm(9), y=rep(c("a","b","c"), each=3), z=rnorm(9))
 head(DT,3)
-DT
+DT2 = data.table(x=rnorm(90000), y=rep(c("a","b","c"), each=30000), z=rnorm(90000))
+head(DT2,3)
 class(DT)
 
 #     See all the data tables in memory
 tables()
 
-#     Subsetting rows
+#     Subsetting rows 
 
 DT[2,]
 DT[DT$y=="a",]
 
-DT[c(2,3)]  # un peu diff de DF... deux lignes (au lieu de col)
-DF[c(2,3)]  # 
+#     Subsetting with only 1 index... data.table <> data.frame 
 
-DT[,c(2,3)]
-# diverge vs DF : the argument you pass is an "expression"
+DT[c(2,3)]  # selectionne les lignes du data.table
+DF[c(2,3)]  # selectionne les colonnes du data.frame
+
+#     ? Subsetting col ??  data.table <divergence totale> data.frame 
+
+DF[,c(2,3)]   #   Subsetting colonnes 2 et 3 du data.frame
+DT[,c(2,3)]   #   the argument you pass is an "expression"
 # ie collection of statement enclosed in curly bracket
 {
   x=1
@@ -198,5 +206,153 @@ DT[,c(2,3)]
 k = {print(10); 5}
 print(k)
 
-DT[,list(mean(x),sum(z))]
+DT[,list(mean(x),sum(z))]   #   liste de function avec les colonnes concern??es
 DT[,table(y)]
+
+#     Adding new column
+DT[,w:=z^2]
+DT
+
+DT3 <- DT   # Attention copie non effectu??e ... bien pour memoire mais
+# changements de DT changent DT3
+DT[, y:=2]
+
+
+#     Multiple operations
+DT[,m:= {tmp <- (x+z); log2(tmp+5)}]
+DT
+DT[,a:=x>0]
+DT
+DT3
+#     group by?..
+DT[,b:= mean(x+w),by=a]
+DT
+
+# Special variables
+# .N an interger, lengh 1, number of time a part group appear 
+set.seed(123);
+DT <- data.table(x=sample(letters[1:3],1E5,TRUE))
+DT
+DT[, .N, by=x]  # much faster...
+
+#       Keys
+DT = data.table(x=rep(c("a","b","c"), each=100), y=rnorm(300))
+DT
+setkey(DT,x)
+DT['a']
+
+#       Joins data.table
+DT1 <- data.table(x=c("a","b","c","dt1"), y=1:4)
+DT1
+DT2 <- data.table(x=c("a","b","dt2"), z=5:7)
+DT2
+setkey(DT1,x); setkey(DT2,x)
+merge(DT1,DT2)  #   construit un data.table avec x,y,z pour les val de cl?? communes
+
+#       Fast reading
+
+big_df <- data.frame(x=rnorm(1E6),y=rnorm(1E6))
+file <- tempfile()
+write.table(big_df, file=file, row.names=FALSE, col.names=TRUE, sep="\t",quote=FALSE)
+system.time(fread(file))
+
+system.time(read.table(file, header=TRUE,sep="\t"))
+
+
+# ----------------------------------------------------------
+#       Quizz1 : 
+# ----------------------------------------------------------
+
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2Fss06hid.csv"
+
+download.file(fileUrl, destfile = "./data/HousingIdaho.csv", method = "curl")
+dateDownloaded <- date()
+dateDownloaded
+HousingIdaho <- read.table("./data/HousingIdaho.csv", sep=",", header = TRUE)
+tmp <- HousingIdaho[complete.cases(HousingIdaho$VAL),]
+worthonemilion <- tmp[tmp$VAL==24,c("SERIALNO","VAL")]
+
+HousingIdaho$FES
+
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FDATA.gov_NGAP.xlsx"
+download.file(fileUrl, destfile = "./data/filequizz.xls", method = "curl")
+dateDownloaded <- date()
+dateDownloaded
+library(xlsx)
+
+test <- read.xlsx("./data/filequizz.xls",sheetIndex=1,header=TRUE)
+class(test)
+colIndex <- 7:15
+rowIndex <- 18:23
+colIndex
+rowIndex
+dat <- read.xlsx("./data/filequizz.xls",sheetIndex=1,header=TRUE, colIndex=colIndex, rowIndex=rowIndex)
+sum(dat$Zip*dat$Ext,na.rm=T) 
+
+
+#       XML
+
+library(XML)
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2Frestaurants.xml"
+download.file(fileUrl, destfile="./data/getdata-data-restaurants.xml", method="curl")
+doc <- xmlTreeParse("./data/getdata-data-restaurants.xml", useInternal=TRUE)
+class(doc)
+doc 
+
+?xmlTreeParse
+
+# fileName <- system.file("exampleData", "./data/getdata-data-restaurants.xml", package="XML")
+# parse the document and return it in its standard format.
+# xmlTreeParse(fileName)
+
+
+rootNode <- xmlRoot(doc)
+class(rootNode)
+rootNode
+xmlName(rootNode)
+names(rootNode)
+
+rootNode[[1]]
+rootNode[[1]][[1]]
+rootNode[[1]][[2]]
+xmlSApply(rootNode,xmlValue) # extrait les xmlValue du rootNode
+
+zipcode <- xpathSApply(rootNode,"//zipcode",xmlValue)  #   xmlValue des noeuds names...
+zipcode
+sum(as.numeric(zipcode==21231))
+
+
+# Question 5
+
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2Fss06pid.csv"
+?fread()
+download.file(fileUrl, destfile = "./data/HousingIdaho.csv", method = "curl")
+dateDownloaded <- date()
+dateDownloaded
+DT <- fread("./data/HousingIdaho.csv", sep=",", header = TRUE)
+
+DT$pwgtp15
+
+# faux
+mean(DT$pwgtp15,by=DT$SEX)
+system.time(mean(DT$pwgtp15,by=DT$SEX))
+
+# faux
+rowMeans(DT)[DT$SEX==1]; rowMeans(DT)[DT$SEX==2]
+system.time(rowMeans(DT)[DT$SEX==1]; rowMeans(DT)[DT$SEX==2])
+
+# Pas mal
+DT[,mean(pwgtp15),by=SEX]
+system.time(DT[,mean(pwgtp15),by=SEX])
+
+# yes...
+sapply(split(DT$pwgtp15,DT$SEX),mean)
+system.time(sapply(split(DT$pwgtp15,DT$SEX),mean))
+
+# ca m'etonnerai
+mean(DT[DT$SEX==1,]$pwgtp15); mean(DT[DT$SEX==2,]$pwgtp15)
+system.time(mean(DT[DT$SEX==1,]$pwgtp15); mean(DT[DT$SEX==2,]$pwgtp15))
+
+# plus long
+tapply(DT$pwgtp15,DT$SEX,mean)
+system.time(tapply(DT$pwgtp15,DT$SEX,mean))
