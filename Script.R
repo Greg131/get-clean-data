@@ -49,6 +49,7 @@ dateDownloaded <- date()
 dateDownloaded
 
 library(xlsx)
+
 cameraData <- read.xlsx("./data/cameras.xlsx",sheetIndex=1,header=TRUE)
 colIndex <- 2:3
 rowIndex <- 1:4
@@ -161,6 +162,7 @@ class(myjson)
 cat(myjson)
 
 iris2 <- fromJSON(myjson)
+class(iris2)
 head(iris2)
 
 # ----------------------------------------------------------
@@ -407,33 +409,33 @@ dbDisconnect(hg19)
 source("http://bioconductor.org/biocLite.R")
 biocLite("rhdfs5")
 library(rhdf5)
-created = h5createFile("example.h5")
-created
+#created = h5createFile("example.h5")
 
-created = h5createGroup("example.h5","foo")
-created = h5createGroup("example.h5","baa")
-created = h5createGroup("example.h5","foo/foobaa")
-h5ls("example.h5")
+#created
+#created = h5createGroup("example.h5","foo")
+#created = h5createGroup("example.h5","baa")
+#created = h5createGroup("example.h5","foo/foobaa")
+#h5ls("example.h5")
 
 A = matrix(1:10,nr=5,nc=2)
 
 A
-h5write(A,"example.h5,"foo/A"")
+#h5write(A,"example.h5,"foo/A"")
 B = array(seq(0.1,2.0,by = 0.1),dim=c(5,2,2))
 B
-h5write(B,"example.h5,"foo/foobaa/B"")
-h5ls("example.h5")
+#h5write(B,"example.h5,"foo/foobaa/B"")
+#h5ls("example.h5")
 
 df = data.frame(1L:5L,seq(0,1,length.out=5), c("ab","cde","fghi","a","s"), stringAsFactors=FALSE)
 df
 h5write(df,"example.h5,"df")
-readA = h5read("example.h5","foo/A")
-readB = h5read("example.h5","foo/foobaa/B")
-readA = h5read("example.h5","df")
+#readA = h5read("example.h5","foo/A")
+#readB = h5read("example.h5","foo/foobaa/B")
+#readA = h5read("example.h5","df")
 
-readA
-h5write(c(12,13,14),"example.h5","foo/A",index=list(1:3,1))
-h5read("example.h5","foo/A")
+#readA
+#h5write(c(12,13,14),"example.h5","foo/A",index=list(1:3,1))
+#h5read("example.h5","foo/A")
 
 # ----------------------------------------------------------
 #       Web - API, authentification - Webscraping
@@ -444,7 +446,7 @@ htmlCode = readLines(con)
 close(con)
 htmlCode
 
-h5write(df,"example.h5,"df")
+#h5write(df,"example.h5,"df")
 library(XML)
 url <- "http://scholar.google.com/citations?user=HI-I6C0AAAAJ&hl=en"
 html <- htmlTreeParse(url, useInternalNodes=T)
@@ -459,6 +461,7 @@ html2
 xpathSApply(html2,"//title",xmlValue)
 
 library(httr)
+
 html2 = GET(url)
 content2 = content(html2,as="text")
 parsedHtml = htmlParse(content2, asText=T)
@@ -502,4 +505,261 @@ json2[1,1:4]
 #       other sources
 # ----------------------------------------------------------
 
+
+# foreign package
+# read.octave(Octave)
+# read.spss(SPSS)
+# ...
+
+# Other... ACESS, MongoDB
+
+# Read images
+# jpeg
+# readbitmap
+# png
+
+# Read musical data
+# tuneR
+# seewave
+
+# ----------------------------------------------------------
+#       Quizz week 2 - Question 1
+#
+# Register an application with the Github API here 
+# https://github.com/settings/applications. 
+# Access the API to get information on your instructors repositories 
+# (hint: this is the url you want 
+# "https://api.github.com/users/jtleek/repos"). 
+# Use this data to find the time that the datasharing repo was created. 
+# What time was it created? 
+# This tutorial may be useful 
+# (https://github.com/hadley/httr/blob/master/demo/oauth2-github.r). 
+# You may also need to run the code in the base R package and not R studio.
+# ----------------------------------------------------------
+
+library(httr)
+library(httpuv)
+library(jsonlite)
+oauth_endpoints("github")
+
+Url <- "https://api.github.com/users/jtleek/repos"
+
+myapp = oauth_app("github",
+                  key="41abbfa5f1896cba36b7",
+                  secret="71c4dcb1a7d935e34367584057f9f2f16673f0f1")
+
+# 3. Get OAuth credentials
+github_token <- oauth2.0_token(oauth_endpoints("github"), myapp)
+
+# 4. Use API (?? lancer depuis R... pour inter..)
+gtoken <- config(token = github_token)
+req <- GET("https://api.github.com/rate_limit", gtoken)
+stop_for_status(req)
+content(req)
+
+
+
+request <- GET("https://api.github.com/users/jtleek/repos", 
+               config(token = github_token))
+
+myjson <- content(request)
+myjson2 <- jsonlite::fromJSON(toJSON(myjson))
+View(myjson2)
+myjson2
+names(myjson2)
+# homeTL = GET("https://api.twitter.com/1.1/statuses/home_timeline.json",sig)
+myjson2[myjson2$name=="datasharing",]$created_at
+
+# ----------------------------------------------------------
+#       Quizz week 2 - Question 2
+# The sqldf package allows for execution of SQL commands on R data frames. 
+# We will use the sqldf package to practice the queries we might send 
+# with the dbSendQuery command in RMySQL. 
+# Download the American Community Survey data 
+# and load it into an R object called acs
+# ----------------------------------------------------------
+library(sqldf)
+
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2Fss06pid.csv"
+download.file(fileUrl, destfile = "./data/american_community_survey.csv", method = "curl")
+acs <- read.table("./data/american_community_survey.csv", sep=",", header = TRUE)
+
+names(acs)
+sqldf("select pwgtp1 from acs where AGEP < 50")
+result <- sqldf("select pwgtp1 from acs where AGEP < 50")
+class(result)
+names(result)
+nrow(result)
+View(result)
+result2 <- acs[acs$AGEP<50,]$pwgtp1
+View(result2)
+
+
+# Autres faux
+sqldf("select * from acs where AGEP < 50 and pwgtp1")
+errdata <- sqldf("select * from acs where AGEP < 50 and pwgtp1")
+nrow(errdata)
+View(errdata)
+# mais ram??ne l'ensemble des colonnes
+sqldf("select * from acs")
+# endemble
+sqldf("select * from acs where AGEP < 50")
+errdata2 <- sqldf("select * from acs where AGEP < 50")
+View(errdata2)
+nrow(errdata2)
+
+# ----------------------------------------------------------
+#       Quizz week 2 - Question 3
+# Using the same data frame you created in the previous problem, 
+# what is the equivalent function to unique(acs$AGEP)
+# ----------------------------------------------------------
+
+data <- unique(acs$AGEP)
+data2 <- sqldf("select distinct AGEP from acs ")
+length(data)
+class(data2)
+names(data2)
+nrow(data2)
+data <- as.data.frame(data)
+names(data) <- "AGEP"
+identical(data,data2)
+
+# ----------------------------------------------------------
+#       Quizz week 2 - Question 4
+# How many characters are in the 10th, 20th, 30th and 100th 
+# lines of HTML from this page: 
+# http://biostat.jhsph.edu/~jleek/contact.html
+# (Hint: the nchar() function in R may be helpful)
+# ----------------------------------------------------------
+
+
+con = url("http://biostat.jhsph.edu/~jleek/contact.html")
+htmlCode = readLines(con)
+close(con)
+htmlCode
+class(htmlCode)
+?readLines
+
+htmlCode[10]
+htmlCode[20]
+htmlCode[30]
+htmlCode[100]
+
+nchar(htmlCode[10])
+nchar(htmlCode[20])
+nchar(htmlCode[30])
+nchar(htmlCode[100])
+
+
+con = url("http://www.w3schools.com/xml/simple.xml")
+xmlCode = readLines(con)
+xmlCode
+class(xmlCode)
+xmlCode[10]
+# En fait on peut lire les lignes ind??pendement du langage XML ou HTML utilise
+# Le HTML et le XML ne sont pas comparables
+# Le seul point commun entre le HTML et le XML est qu'ils sont issus tous deux de la m??me "m??re" soit le SGML 
+# ...http://www.lehtml.com/xml/html.html
+
+
+library(XML)
+
+fileUrl <- "http://www.w3schools.com/xml/simple.xml"
+docXML <- xmlTreeParse(fileUrl, useInternal=TRUE) # Parsing XML files
+class(docXML)
+docXML
+
+
+names <- xpathSApply(docXML,"//name",xmlValue)  #   xmlValue des noeuds names...
+names
+prices <- xpathSApply(docXML,"//price",xmlValue)
+prices 
+
+rootNode <- xmlRoot(docXML)
+class(rootNode)
+rootNode
+xmlName(rootNode)
+names(rootNode)
+
+rootNode[[1]]
+rootNode[[1]][[1]]
+rootNode[[1]][[2]]
+xmlSApply(rootNode,xmlValue) # extrait les xmlValue du rootNode
+names <- xpathSApply(rootNode,"//name",xmlValue)  #   xmlValue des noeuds names...
+prices <- xpathSApply(rootNode,"//price",xmlValue)
+names
+prices
+class(names)
+class(prices)
+
+
+
+fileUrl <- "http://espn.go.com/nfl/team/_/name/bal/baltimore-ravens"
+docHTML <- htmlTreeParse(fileUrl, useInternal=TRUE) # Parsing HTML files
+docHTML
+class(docHTML)
+scores <- xpathSApply(docHTML,"//li[@class='score']",xmlValue)
+teams <- xpathSApply(docHTML,"//li[@class='team-name']",xmlValue)
+scores
+teams
+
+
+# ----------------------------------------------------------
+#       Quizz week 2 - Question 5
+# Read this data set into R 
+# and report the sum of the numbers in the fourth of the nine columns. 
+# https://d396qusza40orc.cloudfront.net/getdata%2Fwksst8110.for
+# ----------------------------------------------------------
+
+con = url("https://d396qusza40orc.cloudfront.net/getdata%2Fwksst8110.for")
+?readLines
+Code = readLines(con)
+close(con)
+Code
+Code[1:10]
+class(Code)
+nchar(Code[1])
+nchar(Code[20])
+nchar(Code[23])
+Code[2]
+Code[3]
+Code[4]
+Code[5]
+
+
+length(Code) # 1258 dont 4 ligne d'entete soit 1254
+nrow <- length(Code) -4
+nrow
+
+?data.frame
+df <- data.frame(date = NA, Nino1.2STT = rep(0,nrow), Nino1.2STTA = rep(0,nrow),
+                 Nino3STT = rep(0,nrow), Nino3STTA = rep(0,nrow),
+                 Nino3.4STT = rep(0,nrow),Nino3.4STTA = rep(0,nrow),
+                 Nino4STT = rep(0,nrow), Nino4STTA = rep(0,nrow))
+
+c(Code[5],"12345678901234567890123456789012345678901234567890")
+
+for (i in 1:nrow) {
+  df[i,1] <- substr(Code[i+4], 2, 10)
+  df[i,2] <- as.numeric(substr(Code[i+4], 16,19))
+  df[i,3] <- as.numeric(substr(Code[i+4], 20,24))
+  df[i,4] <- as.numeric(substr(Code[i+4], 29, 32))
+  df[i,5] <- as.numeric(substr(Code[i+4], 33, 36))
+  df[i,6] <- as.numeric(substr(Code[i+4], 42, 45))
+  df[i,7] <- as.numeric(substr(Code[i+4], 46, 49))
+  df[i,8] <- as.numeric(substr(Code[i+4], 55, 58))
+  df[i,9] <- as.numeric(substr(Code[i+4], 59, 62))
+} 
+names(df)
+class(df$Nino3STT)
+sum(df$Nino3STT)
+
+summary(df)
+
+sum <-0
+for (i in 1:nrow) {
+  tmp  <- as.numeric(substr(Code[i+4], 29, 32))
+  sum <- sum + tmp
+} 
+sum
 
