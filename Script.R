@@ -1314,3 +1314,119 @@ summarize(answer,nb = mean(gdp))
 names(GDPEDU)
 table(GDPEDU$Income.Group,GDPEDU$RankGroups)
 
+
+# ----------------------------------------------------------
+#      Week 4
+# ----------------------------------------------------------
+
+# ----------------------------------------------------------
+#       Quizz Week 4
+# ----------------------------------------------------------
+
+# The American Community Survey distributes downloadable 
+# data about United States communities. Download the 2006 
+# microdata survey about housing for the state of 
+# Idaho using download.file() from here
+
+
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2Fss06hid.csv"
+download.file(fileUrl, destfile = "./data/acs.csv", method = "curl")
+list.files("./data")
+acs <- read.csv("./data/acs.csv")    # default sep "," header TRUE
+names(acs)
+?strsplit()
+strsplit(names(acs), "wgtp")
+
+
+# Q2
+
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FGDP.csv"
+download.file(fileUrl, destfile = "./data/gdp.csv", method = "curl")
+gdp <- read.csv("./data/gdp.csv")    # default sep "," header TRUE
+names(gdp)
+?gsub()
+head(gdp$X.3)
+gsub(",","",gdp$X.3)
+
+millions <- gsub(",","",gdp$X.3)
+millions[5:194]
+mean(as.integer(millions[5:194]))
+
+# Q3
+
+grep("^United",countryNames), 4
+
+names(gdp$X.2) <- "countryNames"
+gdp$X.2
+
+grep("^United",gdp$X.2)
+gdp[grep("^United",gdp$X.2),]$X.2
+
+
+# Q4
+
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FGDP.csv"
+download.file(fileUrl, destfile = "./data/gdp.csv", method = "curl")
+gdp <- read.csv("./data/gdp.csv")   
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FEDSTATS_Country.csv"
+download.file(fileUrl, destfile = "./data/edu.csv", method = "curl")
+edu <- read.csv("./data/edu.csv")   
+
+mergedData = merge(gdp,edu,by.x="X",by.y="CountryCode", all = FALSE) # all pour ajouter row avec de NA si dans un seul..
+head(mergedData)
+
+
+names(mergedData)
+
+grep("Fiscal year",mergedData$Special.Notes)
+liste <- mergedData[grep("Fiscal year",mergedData$Special.Notes),]$Special.Notes
+liste
+grep("June",liste)
+liste[grep("June",liste)]
+
+
+# Q4
+
+source("http://www.quantmod.com/")
+
+library(quantmod)
+amzn = getSymbols("AMZN",auto.assign=FALSE)
+sampleTimes = index(amzn) 
+
+?getSymbols()
+
+class(amzn)
+
+amzn$row.names
+grep("2012",amzn$row.names)
+
+amzn$AMZN.Open
+class(amzn$AMZN.Open)
+
+amzn$AMZN.Open[1]
+a <- amzn$AMZN.Open[1]
+
+class(a)
+index(a)
+
+a <- amzn$AMZN.Open[2000]
+date <- index(a)
+class(index(a))
+date
+date
+amzn$AMZN.Open
+listedate <- index(amzn$AMZN.Open)
+
+startDate = as.Date("2012-01-01");
+endDate = as.Date("2013-01-01");
+
+l2012 <- listedate[listedate < endDate & listedate >= startDate ]
+
+length(listedate[listedate < endDate & listedate >= startDate ])
+
+weekdays <- weekdays(l2012)
+
+length(grep("Monday",weekdays))
+     
+library(lubridate)
+
